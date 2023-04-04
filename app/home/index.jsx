@@ -11,7 +11,11 @@ import { Stack } from "expo-router";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Feather } from "@expo/vector-icons";
 
+import { SPOONACULAR_API_KEY } from "@env";
+import useFetch from "../../hooks/usefetch";
+
 const index = () => {
+    const {} = useFetch(`https://api.spoonacular.com/recipes/complexSearch`);
     return (
         <ScrollView showsVerticalScrollIndicator={false}>
             <View className="flex-1 pt-[50px] items-center">
@@ -33,13 +37,13 @@ const index = () => {
                         <Text className="text-[20px] font-[600] leading-[28px]">
                             Trending now 🔥
                         </Text>
-                        <TouchableOpacity className="flex-row space-x-3 items-center justify-center">
+                        <TouchableOpacity className="flex-row space-x-2 items-center justify-center">
                             <Text className="text-[#E23E3E] font-[600] text-[14px] leading-[19.6px]">
-                                Show all
+                                See all
                             </Text>
                             <Feather
                                 name="arrow-right"
-                                size={16}
+                                size={20}
                                 color="#E23E3E"
                             />
                         </TouchableOpacity>
