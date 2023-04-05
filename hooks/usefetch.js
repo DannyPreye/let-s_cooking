@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { SPOONACULAR_API_KEY } from "@env";
 
 const useFetch = (url) => {
     const [data, setData] = useState([]);
     const [isloading, setIsloading] = useState(false);
     const [error, setError] = useState(false);
 
+    console.log(url);
     const fetchData = async () => {
         setIsloading(true);
         try {
-            const response = await axios.request(url);
-            setData(response.data.data);
+            const response = await axios.get(url);
+            setData(response.data);
             setIsloading(false);
         } catch (error) {
             console.log(error);
