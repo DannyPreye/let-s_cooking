@@ -53,7 +53,7 @@ const Trending = () => {
                         renderItem={({ item }) => <TrendingCard data={item} />}
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ columnGap: 20 }}
+                        contentContainerStyle={{ columnGap: 16 }}
                     />
                 )}
             </View>

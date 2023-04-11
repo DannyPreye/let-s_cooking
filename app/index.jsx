@@ -4,6 +4,8 @@ import {
     ImageBackground,
     TouchableOpacity,
     StatusBar,
+    SafeAreaView,
+    Platform,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import React from "react";
@@ -14,7 +16,6 @@ const index = () => {
     const router = useRouter();
     return (
         <>
-            <StatusBar barStyle="light-content" />
             <View className=" flex-1 ">
                 <ImageBackground
                     source={background}
