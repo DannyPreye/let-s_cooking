@@ -9,43 +9,64 @@ import {
     SafeAreaView,
     ScrollView,
     FlatList,
+    SectionList,
 } from "react-native";
 import { useRouter, useSearchParams, Stack } from "expo-router";
 import { useState } from "react";
 import { AntDesign } from "@expo/vector-icons";
+import { WebView } from "react-native-webview";
 
 import useFetch from "../../hooks/usefetch";
 import { SPOONACULAR_API_KEY } from "@env";
 
-const Ingredients = ({ ingredients }) => (
+const Ingredient = ({ ingredient }) => (
     <View className="w-full flex-row items-center justify-between h-[76] rounded-[10px] bg-[#f1f1f1] px-[16px] py-[12px] mt-[12px]">
         <View className="flex-row items-center gap-2">
             <Image
                 source={{
-                    uri: `https://spoonacular.com/recipeImages/${ingredients?.image}`,
+                    uri: `https://spoonacular.com/recipeImages/${ingredient?.image}`,
                 }}
                 className="w-[56px] h-[56px] rounded-[10px]"
             />
-            <Text className="capitalize font-[600] text-[16px] leading-[22.4px]">
-                {ingredients?.name}
+            <Text className="capitalize w-[50%] font-[600] text-[16px] leading-[22.4px]">
+                {ingredient?.name}
             </Text>
         </View>
         <Text className="text-[14px] leading-[19.6px] text-right font-[400] text-[#a9a9a9]">
-            {ingredients?.measures?.metric?.amount}&nbsp;
-            {ingredients?.measures?.metric?.unitShort}
+            {ingredient?.measures?.metric?.amount}&nbsp;
+            {ingredient?.measures?.metric?.unitShort}
         </Text>
     </View>
 );
+const menu = ["Description", "Ingredients", "Instructions"];
+
+const MenuOption = ({ handlePress, currentMenu, item }) => {
+    return (
+        <TouchableOpacity
+            onPress={handlePress}
+            className={`px-4 py-2 rounded-full ${
+                currentMenu == item ? "bg-[#E23E3E]" : "bg-[#a9a9a9]"
+            }`}
+        >
+            <Text
+                className={`${
+                    currentMenu == item ? "text-white" : "text-[#313030]"
+                } font-[600] text-[14px]`}
+            >
+                {item}
+            </Text>
+        </TouchableOpacity>
+    );
+};
 
 const RecipeDetails = () => {
-    const { current, setCurrent } = useState("ingredients");
+    const [currentMenu, setCurrentMenu] = useState("Description");
     const { id } = useSearchParams();
     const { data, isloading, reFetch, error } = useFetch(
         `https://api.spoonacular.com/recipes/${id}/information?apiKey=${SPOONACULAR_API_KEY}`
     );
     const router = useRouter();
 
-    console.log("error", error);
     return (
         <SafeAreaView
             className="flex-1 px-[20] "
@@ -90,22 +111,34 @@ const RecipeDetails = () => {
                             </Text>
                         </View>
                         <View className="flex-1">
-                            <View className="flex-row items-center justify-between mt-[12] mb-4">
-                                <Text className="font-[600] text-[20px] leading-[24px]">
-                                    Ingredients
-                                </Text>
-                                <Text className="font-[400] text-[14px] leading-[19.6px] text-[#a9a9a9]">
-                                    {data?.extendedIngredients?.length} items
-                                </Text>
+                            <View className="mt-[16px]">
+                                <FlatList
+                                    data={menu}
+                                    renderItem={({ item, index }) => (
+                                        <MenuOption
+                                            item={item}
+                                            handlePress={() =>
+                                                setCurrentMenu(item)
+                                            }
+                                            currentMenu={currentMenu}
+                                        />
+                                    )}
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={{ columnGap: 4 }}
+                                />
                             </View>
-                            <ScrollView>
-                                {data?.extendedIngredients?.map((item) => (
-                                    <Ingredients
-                                        ingredients={item}
-                                        key={item?.id}
-                                    />
-                                ))}
-                            </ScrollView>
+                            {currentMenu == "Ingredients" ? (
+                                <Ingredients data={data} />
+                            ) : currentMenu == "Description" ? (
+                                <Description textBody={data?.summary} />
+                            ) : (
+                                <Instructions
+                                    instructions={
+                                        data?.analyzedInstructions[0]?.steps
+                                    }
+                                />
+                            )}
                         </View>
                     </View>
                 </>
@@ -115,3 +148,70 @@ const RecipeDetails = () => {
 };
 
 export default RecipeDetails;
+
+function Ingredients({ data }) {
+    return (
+        <View className="flex-1">
+            <View className="flex-row items-center justify-between mt-[12] mb-4">
+                <Text className="font-[600] text-[20px] leading-[24px]">
+                    Ingredients
+                </Text>
+                <Text className="font-[400] text-[14px] leading-[19.6px] text-[#a9a9a9]">
+                    {data?.extendedIngredients?.length} items
+                </Text>
+            </View>
+            <ScrollView>
+                {data?.extendedIngredients?.map((item) => (
+                    <Ingredient ingredient={item} key={item?.id} />
+                ))}
+            </ScrollView>
+        </View>
+    );
+}
+const Description = ({ textBody }) => (
+    <View className="flex-1 mt-[16px]">
+        <WebView
+            allowsLinkPreview
+            originWhitelist={["*"]}
+            source={{
+                html: `
+                <style> a{color:black; text-decoration:none;}</style>
+                <div style="font-size:16px; font-weight:600; margin-top:12px;">${textBody} </div>`,
+            }}
+            t
+            style={{ fontSize: 14 }}
+        />
+    </View>
+);
+
+const Instructions = ({ instructions }) => {
+    const sectionType = instructions.reduce((newData, item, index, data) => {
+        newData.push({
+            title: `Step ${item.number.toString()}`,
+            data: data,
+        });
+        return newData;
+    }, []);
+
+    return (
+        <View className="flex-1 mt-[16px]">
+            <SectionList
+                sections={sectionType}
+                // key={(item, index) => `instruction${index}`}
+                renderItem={({ item, index, section }) => {
+                    console.log(item);
+                    return (
+                        <View className="mt-2" key={index}>
+                            <Text className="text-justify">{item?.step}</Text>
+                        </View>
+                    );
+                }}
+                renderSectionHeader={({ section }) => (
+                    <Text className="font-[600] text-[16px]">
+                        {section.title}
+                    </Text>
+                )}
+            />
+        </View>
+    );
+};
